@@ -213,11 +213,21 @@ void writeKoo(Koo& koo, DoubleBufferedFrameAllocated& buffer)
 
 #include <thread>
 #include <memory>
+
+#include "MyAllocator.h"
+
+void myAllocatorTest()
+{
+	std::vector<int, MyAllocator<int>> v(8);
+	v.push_back(42);
+}
+
 int main()
 {
+	myAllocatorTest();
 	//Alloc<sizeof(Foo)>::memAllocator.reserve(1000);
 
-	benchmark();
+	//benchmark();
 
 	//std::cout << Alloc<sizeof(Bar)>::memAllocator.size() << std::endl;
 	//static constexpr int n = 500;

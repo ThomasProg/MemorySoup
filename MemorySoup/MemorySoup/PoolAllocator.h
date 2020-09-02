@@ -11,6 +11,8 @@ public:
 
 	void* headPtr = nullptr;
 
+	MemAllocator() = default;
+
 	__inline MemAllocator(MemAllocator&& rhs) noexcept
 	{
 		data = rhs.data;
@@ -68,8 +70,8 @@ public:
 
 	__forceinline void removeElem(void* data) noexcept
 	{
-		//*((void**)(data)) = headPtr;
-		//headPtr = data;
+		*((void**)(data)) = headPtr;
+		headPtr = data;
 	}
 
 	~MemAllocator()

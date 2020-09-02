@@ -9,9 +9,12 @@ public:
 
 	using Super = MemAllocator;
 
+	MemAllocatorSafe() = default;
+
 	MemAllocatorSafe(size_t nbElements, size_t elementSize)
+		: MemAllocator(nbElements, elementSize)
 	{
-		createAllocator(nbElements, elementSize);
+
 	}
 
 	MemAllocatorSafe(MemAllocatorSafe&& rhs) noexcept

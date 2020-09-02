@@ -22,7 +22,7 @@ public:
 	__forceinline static void* allocate()
 	{
 		void* data;
-		for (MemAllocatorSafe<SIZE>& allocator : memAllocator)
+		for (MemAllocatorSafe& allocator : memAllocator)
 		{
 			data = allocator.addElem();
 			if (data != nullptr)
@@ -31,13 +31,13 @@ public:
 			}
 		}
 
-		memAllocator.emplace_back();
+		memAllocator.emplace_back(50, SIZE);
 		return memAllocator.back().addElem();
 	}
 
 	__forceinline static void deallocate(void* data)
 	{
-		for (MemAllocatorSafe<SIZE>& allocator : memAllocator)
+		for (MemAllocatorSafe& allocator : memAllocator)
 		{
 			if (allocator.removeElem(data))
 			{
@@ -78,7 +78,7 @@ __forceinline void Bar::operator delete(void* foo)
 
 void benchmark()
 {
-	static constexpr int n = 50000;
+	static constexpr int n = 500;
 
 	//for (int i = 0; i < 10; i++)
 	//Alloc<sizeof(Foo)>::memAllocator.emplace_back();
@@ -217,7 +217,7 @@ int main()
 {
 	//Alloc<sizeof(Foo)>::memAllocator.reserve(1000);
 
-	//benchmark();
+	benchmark();
 
 	//std::cout << Alloc<sizeof(Bar)>::memAllocator.size() << std::endl;
 	//static constexpr int n = 500;
@@ -245,17 +245,17 @@ int main()
 
 
 
-	DoubleBufferedFrameAllocated buffer;
-	Koo koo;
+	//DoubleBufferedFrameAllocated buffer;
+	//Koo koo;
 
-	for (int i = 0; i < 10; i++)
-	{
-		std::thread write(writeKoo, std::ref(koo), std::ref(buffer));
-		std::thread read(readKoo, std::ref(koo), std::ref(buffer));
+	//for (int i = 0; i < 10; i++)
+	//{
+	//	std::thread write(writeKoo, std::ref(koo), std::ref(buffer));
+	//	std::thread read(readKoo, std::ref(koo), std::ref(buffer));
 
-		write.join();
-		read.join();
+	//	write.join();
+	//	read.join();
 
-		buffer.swapBuffers();
-	}
+	//	buffer.swapBuffers();
+	//}
 }

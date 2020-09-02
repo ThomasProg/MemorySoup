@@ -21,7 +21,7 @@ public:
 
 	~Foo()
 	{
-		std::cout << "Yeah" << std::endl;
+
 	}
 
 	__forceinline  static void* operator new(size_t size);

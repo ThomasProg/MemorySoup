@@ -5,7 +5,7 @@
 #include <new>
 
 template<typename T>
-class TypedMemAllocator
+class TypedPoolAllocator
 {
 public:
 	union DataPointerUnion
@@ -19,7 +19,7 @@ public:
 
 	DataPointerUnion* headPtr = nullptr;
 
-	TypedMemAllocator()
+	TypedPoolAllocator()
 	{
 		data = static_cast<DataPointerUnion*> (malloc(sizeof(DataPointerUnion) * nbMaxElem));
 		if (data == nullptr)

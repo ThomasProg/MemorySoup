@@ -1,22 +1,21 @@
 #pragma once
 
-#include "MemAllocator.h"
+#include "PoolAllocator.h"
 
-template<size_t MEM_SIZE>
-class MemAllocatorSafe : public MemAllocator<MEM_SIZE>
+class MemAllocatorSafe : public MemAllocator
 {
 public:
 	void* end = nullptr;
 
-	using Super = MemAllocator<MEM_SIZE>;
+	using Super = MemAllocator;
 
-	MemAllocatorSafe()
+	MemAllocatorSafe(size_t nbElements, size_t elementSize)
 	{
-		createAllocator();
+		createAllocator(nbElements, elementSize);
 	}
 
 	MemAllocatorSafe(MemAllocatorSafe&& rhs) noexcept
-		: MemAllocator<MEM_SIZE>(std::move(rhs))
+		: MemAllocator(std::move(rhs))
 	{
 		end = rhs.end;
 		rhs.end = nullptr;
@@ -24,16 +23,16 @@ public:
 
 	MemAllocatorSafe& operator=(MemAllocatorSafe&& rhs) noexcept
 	{
-		MemAllocator<MEM_SIZE>::operator=(std::move(rhs));
+		MemAllocator::operator=(std::move(rhs));
 		end = rhs.end;
 		rhs.end = nullptr;
 		return *this;
 	}
 
-	void createAllocator()
+	void createAllocator(size_t nbElements, size_t elementSize)
 	{
-		Super::createAllocator();
-		end = ((char*) this->data) + this->nbMaxElem * MEM_SIZE;
+		Super::createAllocator(nbElements, elementSize);
+		end = ((char*) this->data) + nbElements * elementSize;
 	}
 
 	__forceinline void* addElem() noexcept

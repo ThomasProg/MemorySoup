@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include "TypedMemAllocator.h"
+#include "TypedPoolAllocator.h"
 
-#include "MemAllocator.h"
+#include "PoolAllocator.h"
 
-#include "MemAllocatorSafe.h"
+#include "PoolAllocatorSafe.h"
 
 #include "Foo.h"
 #include "Bar.h"
@@ -17,7 +17,7 @@ template<size_t SIZE>
 class Alloc
 {
 public:
-	static std::vector<MemAllocatorSafe<SIZE>> memAllocator;
+	static std::vector<MemAllocatorSafe> memAllocator;
 	
 	__forceinline static void* allocate()
 	{
@@ -48,7 +48,7 @@ public:
 };
 
 template<size_t SIZE>
-std::vector<MemAllocatorSafe<SIZE>> Alloc<SIZE>::memAllocator;
+std::vector<MemAllocatorSafe> Alloc<SIZE>::memAllocator;
 
 
 
@@ -234,28 +234,28 @@ int main()
 	//}
 
 
-	std::unique_ptr<Foo> foo (new Foo());
+	//std::unique_ptr<Foo> foo (new Foo());
 
-	Foo* r = foo.release();
+	//Foo* r = foo.release();
 
-	std::shared_ptr<Foo> f(new Foo());
-
-
-	delete r;
+	//std::shared_ptr<Foo> f(new Foo());
 
 
+	//delete r;
 
-	//DoubleBufferedFrameAllocated buffer;
-	//Koo koo;
 
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	std::thread write(writeKoo, std::ref(koo), std::ref(buffer));
-	//	std::thread read(readKoo, std::ref(koo), std::ref(buffer));
 
-	//	write.join();
-	//	read.join();
+	DoubleBufferedFrameAllocated buffer;
+	Koo koo;
 
-	//	buffer.swapBuffers();
-	//}
+	for (int i = 0; i < 10; i++)
+	{
+		std::thread write(writeKoo, std::ref(koo), std::ref(buffer));
+		std::thread read(readKoo, std::ref(koo), std::ref(buffer));
+
+		write.join();
+		read.join();
+
+		buffer.swapBuffers();
+	}
 }

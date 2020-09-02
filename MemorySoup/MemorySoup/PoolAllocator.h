@@ -2,7 +2,6 @@
 
 #include <memory>
 
-template<size_t MEM_SIZE>
 class MemAllocator
 {
 protected:
@@ -11,9 +10,6 @@ public:
 	static constexpr size_t nbMaxElem = 2 << 10;
 
 	void* headPtr = nullptr;
-
-	static int b;
-	int a = 0;
 
 	__inline MemAllocator(MemAllocator&& rhs) noexcept
 	{
@@ -32,34 +28,27 @@ public:
 		return *this;
 	}
 
-	MemAllocator()
+	MemAllocator(size_t nbElements, size_t elementSize)
 	{
-		b++;
-		createAllocator();
+		createAllocator(nbElements, elementSize);
 	}
 
-	void createAllocator()
+	void createAllocator(size_t nbElements, size_t elementSize)
 	{
-		data = malloc(MEM_SIZE * nbMaxElem);
+		data = malloc(elementSize * nbElements);
 		if (data == nullptr)
 		{
 			return;
 		}
 
 		char* ptr = (char*)data;
-		for (size_t i = 0; i < nbMaxElem - 1; ++i)
+		for (size_t i = 0; i < nbElements - 1; ++i)
 		{
-			void** p = (void**) (ptr + i * MEM_SIZE);
-			*p = ptr + (i + 1) * MEM_SIZE;
+			void** p = (void**)(ptr + i * elementSize);
+			*p = ptr + (i + 1) * elementSize;
 		}
-		void** p = (void**) (ptr + (nbMaxElem - 1) * MEM_SIZE);
+		void** p = (void**)(ptr + (nbElements - 1) * elementSize);
 		*p = nullptr;
-
-		//for (size_t i = 0; i < nbMaxElem - 1; ++i)
-		//{
-		//	*((void**)(((char*)data) + i * MEM_SIZE)) = (((char*)data) + (i + 1) * MEM_SIZE);
-		//}
-		//*((void**)((char*)data + MEM_SIZE * (nbMaxElem - 1))) = nullptr;
 
 		headPtr = data;
 		
@@ -71,7 +60,7 @@ public:
 		{
 			return nullptr;
 		}
-		a++;
+
 		void* newObjectMemLoc = headPtr;
 		headPtr = *((void**)headPtr);
 		return newObjectMemLoc;
@@ -91,6 +80,3 @@ public:
 		}
 	}
 };
-
-template<size_t MEM_SIZE>
-int MemAllocator<MEM_SIZE>::b = 0;

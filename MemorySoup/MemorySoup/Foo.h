@@ -1,29 +1,26 @@
 #pragma once
-#include <iostream>
+
+#include "UnrolledListAllocator.hpp"
+
 class Foo
 {
+    int a = 2;
+    int b = 2;
+    int c = 2;
+
 public:
-	int a = 1, b = 2, c = 3;
+    inline static UnrolledListAllocator<Foo> allocator = UnrolledListAllocator<Foo>::fromNbElements(100); //UnrolledListAllocator<Foo>::fromBytes(1000);
 
-	Foo() = default;
-	Foo(Foo&&) noexcept
-	{
+public:
+    // custom placement new
+    static void* operator new(std::size_t size) 
+    {
+        return allocator.allocate(1); 
+    }
 
-	}
-	Foo(const Foo& f)
-	{
-	std::cout << "Copy" << std::endl;
-	}
-	Foo(int i)
-	{
-
-	}
-
-	~Foo()
-	{
-
-	}
-
-	__forceinline  static void* operator new(size_t size);
-	__forceinline  static void operator delete(void* foo);
+    // custom placement delete
+    static void operator delete(void* ptr)
+    {
+        allocator.deallocate(static_cast<Foo*>(ptr), 1);
+    }
 };

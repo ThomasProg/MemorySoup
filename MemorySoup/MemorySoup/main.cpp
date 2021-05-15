@@ -1,271 +1,113 @@
+#include "UnrolledListAllocator.hpp"
+#include "Bar.h"
+#include "Foo.h"
 #include <iostream>
 
-#include "TypedPoolAllocator.h"
-
-#include "PoolAllocator.h"
-
-#include "PoolAllocatorSafe.h"
-
-#include "Foo.h"
-#include "Bar.h"
-
-#include "DoubleBufferedFrameAllocated.h"
-
-#include <vector>
-
-template<size_t SIZE>
-class Alloc
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const UnrolledListAllocator<T>& list)
 {
-public:
-	static std::vector<MemAllocatorSafe> memAllocator;
-	
-	__forceinline static void* allocate()
-	{
-		void* data;
-		for (MemAllocatorSafe& allocator : memAllocator)
-		{
-			data = allocator.addElem();
-			if (data != nullptr)
-			{
-				return data;
-			}
-		}
+    for (typename UnrolledListAllocator<T>::Node* currentNode = list.firstNode; currentNode != list.lastNode->next; currentNode = currentNode->next)
+    {
+        std::cout << "===============\n";
+        std::cout << "size : " <<  list.m_size << '\n';
+        for (typename UnrolledListAllocator<T>::SubNode* p = currentNode->getSubNodes(); p < currentNode->getSubNodes() + list.m_size; p++)
+        {
+            std::cout << "Current Node : " << p << "\t/\t";
+            std::cout << p->next - p << "   /   " << p->next << std::endl;
+        }
+        std::cout << "===============\n";
+    }
 
-		memAllocator.emplace_back(50, SIZE);
-		return memAllocator.back().addElem();
-	}
-
-	__forceinline static void deallocate(void* data)
-	{
-		for (MemAllocatorSafe& allocator : memAllocator)
-		{
-			if (allocator.removeElem(data))
-			{
-				return;
-			}
-		}
-	}
-};
-
-template<size_t SIZE>
-std::vector<MemAllocatorSafe> Alloc<SIZE>::memAllocator;
-
-
-
-__forceinline void* Foo::operator new(size_t size)
-{
-	return Alloc<sizeof(Foo)>::allocate();
+    return out;
 }
 
-__forceinline void Foo::operator delete(void* foo)
+void oneNodeTest()
 {
-	Alloc<sizeof(Foo)>::deallocate(foo);
+    Foo* f = new Foo();
+    Foo* f2 = new Foo();
+
+    std::cout << (Foo::allocator) << std::endl;    
+
+    delete f;
+    delete f2;
+
+    std::cout << (Foo::allocator) << std::endl;   
 }
 
-__forceinline void* Bar::operator new(size_t size)
+// Test the integrity of UnrolledListAllocator if multiple nodes are added
+void multipleNodesTest()
 {
-	return Alloc<sizeof(Bar)>::allocate();
-}
+    Foo* f[5];
+    for (int i = 0; i < 5; i++)
+    {
+        f[i] = new Foo();
+    }
 
-__forceinline void Bar::operator delete(void* foo)
-{
-	Alloc<sizeof(Bar)>::deallocate(foo);
-}
+    std::cout << (Foo::allocator) << std::endl;    
 
+    for (int i = 0; i < 5; i++)
+    {
+        delete f[i];
+    }
+
+    // Foo* ff = new Foo();
+
+    std::cout << "\n\n\n\n\n" << std::endl;
+    std::cout << (Foo::allocator) << std::endl;   
+}
 
 #include <chrono>
-#include <ctime>
+#include <bits/stdc++.h>
+#include <new>
 
-void benchmark()
+template<template<typename> class ALLOCATOR>
+void perfTest()
 {
-	static constexpr int n = 500;
+	ALLOCATOR<Bar> allocator;
 
-	//for (int i = 0; i < 10; i++)
-	//Alloc<sizeof(Foo)>::memAllocator.emplace_back();
+    auto start = std::chrono::high_resolution_clock::now();
+  
+    constexpr size_t size = 100000;
+    Bar* f[size];
+    for (size_t i = 0; i < size; i++)
+    {
+		f[i] = allocator.allocate(1);
+        new (f[i]) Bar();
+    }
 
-	int i;
-	std::cin >> i;
-	auto start = std::chrono::system_clock::now();
-
-	Foo* foos[n];
-	Bar* bars[n];
-
-	for (int i = 0; i < n; i++)
-	{
-		foos[i] = new Foo(i);
-	}
-
-	for (int i = 0; i < n; i++)
-	{
-		delete foos[i];
-	}
-
-	for (int i = 0; i < n; i++)
-	{
-		bars[i] = new Bar(i);
-	}
-
-	for (int i = 0; i < n; i++)
-	{
-		delete bars[i];
-	}
-
-	//for (int i = n; i > 0; i--)
-	//{
-	//	delete foos[i - 1];
-	//}
-
-	auto end = std::chrono::system_clock::now();
-
-	std::chrono::duration<double> elapsed_seconds = end - start;
-	std::cout << "time : " << elapsed_seconds.count() << std::endl;
-	std::cin >> i;
-	start = std::chrono::system_clock::now();
-	//for (int i = 0; i < n; i++)
-	//{
-	//	::delete ::new Foo(i);
-	//	::delete ::new Bar(i);
-	//}
-	for (int i = 0; i < n; i++)
-	{
-		foos[i] = ::new Foo(i);
-	}
-
-	for (int i = 0; i < n; i++)
-	{
-		::delete foos[i];
-	}
-
-	for (int i = 0; i < n; i++)
-	{
-		bars[i] = ::new Bar(i);
-	}
-
-	for (int i = 0; i < n; i++)
-	{
-		::delete bars[i];
-	}
-
-	end = std::chrono::system_clock::now();
-	elapsed_seconds = end - start;
-	std::cout << "time : " << elapsed_seconds.count() << std::endl;
-
-	std::cin >> i;
-	start = std::chrono::system_clock::now();
-	for (int i = 0; i < n; i++)
-	{
-		Foo f(i);
-	}
-	end = std::chrono::system_clock::now();
-	elapsed_seconds = end - start;
-	std::cout << "time : " << elapsed_seconds.count() << std::endl;
-
-	//TypedMemAllocator<Foo>::DataPointerUnion* ptr = memAllocator.headPtr;
-	//int counter = 0;
-	//while (ptr->next != nullptr)
-	//{
-	//	ptr = ptr->next;
-	//	counter++;
-	//}
-	//std::cout << counter << std::endl;
-}
-
-class Koo
-{
-	int* foo = nullptr;
-
-public:
-	void updateWrite(DoubleBufferedFrameAllocated& buffer)
-	{
-		if (foo == nullptr)
-		{
-			foo = buffer.write<int>();
-			*foo = 0;
-		}
-		else
-		{
-			int f = *foo;
-			foo = buffer.write<int>();
-			(*foo) = f + 1;
-		}
-		//foo->a ++;
-	}
-
-	void updateRead(const DoubleBufferedFrameAllocated& buffer)
-	{
-		if (foo != nullptr)
-		{
-			// Use foo
-			std::cout << *foo << std::endl;
-		}
-	}
-};
-
-void readKoo(Koo& koo, DoubleBufferedFrameAllocated& buffer)
-{
-	koo.updateRead(buffer);
-}
-
-void writeKoo(Koo& koo, DoubleBufferedFrameAllocated& buffer)
-{
-	koo.updateWrite(buffer);
-}
-
-#include <thread>
-#include <memory>
-
-#include "MyAllocator.h"
-
-void myAllocatorTest()
-{
-	std::vector<int, MyAllocator<int>> v(8);
-	v.push_back(42);
+    for (size_t i = 0; i < size; i++)
+    {
+		f[i]->~Bar();
+		allocator.deallocate(f[i], 1);
+    }
+  
+    auto end = std::chrono::high_resolution_clock::now();
+  
+    // Calculating total time taken by the program.
+    double time_taken = 
+      std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+  
+    time_taken *= 1e-9;
+  
+    std::cout << "Time taken is : " << std::fixed 
+         << time_taken << std::setprecision(9);
+    std::cout << " sec" << std::endl;
 }
 
 int main()
 {
-	myAllocatorTest();
-	//Alloc<sizeof(Foo)>::memAllocator.reserve(1000);
+    // multipleNodesTest();
 
-	//benchmark();
+	std::cout << "default allocator : \n"; 
+    perfTest<std::allocator>();
 
-	//std::cout << Alloc<sizeof(Bar)>::memAllocator.size() << std::endl;
-	//static constexpr int n = 500;
-	//Foo* foos[n];
+	std::cout << "UnrolledListAllocator : \n"; 
+	perfTest<UnrolledListAllocator>();
 
-	//for (int i = 0; i < n; i++)
-	//{
-	//	foos[i] = new Foo(i);
-	//}
+    // {
+    //     std::unique_ptr<Bar> f = std::make_unique<Bar>();
+    //     std::cout << (Bar::allocator) << std::endl;   
+    // }
 
-	//for (int i = 0; i < n; i++)
-	//{
-	//	delete foos[i];
-	//}
-
-
-	//std::unique_ptr<Foo> foo (new Foo());
-
-	//Foo* r = foo.release();
-
-	//std::shared_ptr<Foo> f(new Foo());
-
-
-	//delete r;
-
-
-
-	//DoubleBufferedFrameAllocated buffer;
-	//Koo koo;
-
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	std::thread write(writeKoo, std::ref(koo), std::ref(buffer));
-	//	std::thread read(readKoo, std::ref(koo), std::ref(buffer));
-
-	//	write.join();
-	//	read.join();
-
-	//	buffer.swapBuffers();
-	//}
+    // std::cout << (Bar::allocator) << std::endl;   
 }

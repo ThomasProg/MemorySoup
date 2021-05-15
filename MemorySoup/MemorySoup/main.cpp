@@ -94,6 +94,9 @@ void perfTest()
     std::cout << " sec" << std::endl;
 }
 
+#include "SortedVector.hpp"
+#include "UnrolledListContainer.hpp"
+
 int main()
 {
     // multipleNodesTest();
@@ -110,4 +113,19 @@ int main()
     // }
 
     // std::cout << (Bar::allocator) << std::endl;   
+
+
+    SortedVector<Bar> b;
+
+    UnrolledListContainer<Bar> c;
+    auto it = c.emplace();
+
+    c.erase(*it);
+
+    UnrolledListContainer<Bar>::iterator i = c.begin();
+
+    for (Bar* b : c)
+    {
+        std::cout << b->a << std::endl;
+    }
 }

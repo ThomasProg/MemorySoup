@@ -17,3 +17,8 @@ A container that guarantees :
 - O(log(n)) insertion complexity
 - O(log(n)) erasure complexity
 - VERY FAST iteration in for each loops. Indeed, elements are close in memory and the iteration will happen in a cache friendly order.
+
+## In the future : 
+- Strings / Ropes optimizations
+- static vector/string optimizations
+- vector/string reserve prediction
